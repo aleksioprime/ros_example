@@ -1,0 +1,9 @@
+services:
+  ros:
+    build: .  # Собираем образ из Dockerfile в текущей директории
+    container_name: ros_test
+    volumes:
+      - ./src:/ros_workspace/src:cached
+    tty: true # Оставляем TTY открытым (чтобы работали интерактивные сессии)
+    stdin_open: true # Позволяет вводить команды (например, через docker exec -it)
+    restart: unless-stopped # Автоматический рестарт контейнера, если он упал

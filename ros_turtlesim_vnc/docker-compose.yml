@@ -1,0 +1,17 @@
+services:
+  ros_turtlesim_vnc:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ros_turtlesim_vnc:latest
+    container_name: ros_turtlesim_vnc
+    ports:
+      - "5901:5901"
+      - "6080:6080"
+    volumes:
+      # Монтируем локальную папку src в рабочую директорию контейнера,
+      # чтобы изменения в файлах применялись без пересборки образа.
+      - ./src:/ros_workspace/src:cached
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
