@@ -1,41 +1,58 @@
 """
 Простой пример ROS2 программы для тестирования.
 
-Создаёт узел, который публикует случайные значения в два топика:
-  - /sensor/light_sensor
-  - /sensor/smoke_sensor
+Создаёт узел, который публикует случайные значения в несколько топиков вида:
+  /sensor/<sensor_name>
 
-Используется для проверки подписчиков (например, SensorMonitor).
+Набор сенсоров формируется случайно при запуске из доступного списка.
+Используется для проверки подписчиков (например, SensorMonitor)
 """
 
+import random
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float64
-import random
 
 
 class SensorPublisher(Node):
     """
-    Узел ROS2, публикующий случайные значения двух сенсоров
+    Узел ROS2, публикующий случайные значения для случайного набора сенсоров
     """
 
     def __init__(self):
-        # Инициализация узла с именем 'sensor_publisher'
         super().__init__('sensor_publisher')
 
-        # Создаём два паблишера для топиков /sensor/light_sensor и /sensor/smoke_sensor
+        # Доступные типы сенсоров — список можно расширить при необходимости
+        available_sensors = [
+            "light_sensor",
+            "smoke_sensor",
+            "temperature_sensor",
+            "humidity_sensor",
+            "pressure_sensor",
+            "motion_sensor",
+            "sound_sensor",
+        ]
+
+        # Случайно выбираем от 2 до 5 сенсоров из списка
+        selected = random.sample(available_sensors, random.randint(2, 5))
+
+        self.get_logger().info(f"Активные сенсоры: {', '.join(selected)}")
+
+        # Создаём паблишеры для выбранных топиков
         self.sensors = {
-            "light_sensor": self.create_publisher(Float64, '/sensor/light_sensor', 10),
-            "smoke_sensor": self.create_publisher(Float64, '/sensor/smoke_sensor', 10)
+            name: self.create_publisher(Float64, f'/sensor/{name}', 10)
+            for name in selected
         }
 
-        # Таймер вызывает метод publish_values каждые 0.1 секунды
-        self.timer = self.create_timer(0.1, self.publish_values)
+        # Таймер вызывает publish_values каждые 0.2 секунды
+        self.timer = self.create_timer(0.2, self.publish_values)
 
     def publish_values(self):
-        """Генерирует случайные значения и публикует их в топики."""
+        """
+        Генерирует случайные значения и публикует их в топики
+        """
         for name, pub in self.sensors.items():
-            value = random.uniform(-1500, 1500)  # Случайное значение от -1500 до 1500
+            value = random.uniform(-1500, 1500)
             msg = Float64()
             msg.data = value
             pub.publish(msg)
@@ -43,16 +60,16 @@ class SensorPublisher(Node):
 
 
 def main():
-    """Точка входа: инициализация ROS2 и запуск узла."""
+    """
+    Точка входа: инициализирует ROS2 и запускает узел
+    """
     rclpy.init()
     node = SensorPublisher()
     try:
-        # Запуск узла до прерывания (Ctrl+C)
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass
     finally:
-        # Корректное завершение работы узла и ROS2 контекста
         node.destroy_node()
         rclpy.shutdown()
 

@@ -57,7 +57,7 @@ ros2 topic echo --once /sensor/smoke_sensor
 
 Запустите программму, которая считывает данные из топиков:
 ```sh
-docker exec -it ros_test python3 src/tasks/topic_nadzor.py
+python3 src/tasks/topic_nadzor.py
 ```
 
 После тестирования можно остановить контейнер:
