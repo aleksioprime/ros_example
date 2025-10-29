@@ -11,6 +11,7 @@ import select
 import termios
 import tty
 import time
+import os
 
 
 class KeyboardController(Node):
@@ -86,7 +87,21 @@ class KeyboardController(Node):
     def get_key(self):
         """Неблокирующее чтение клавиши"""
         if select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], []):
-            return sys.stdin.read(1)
+            key = sys.stdin.read(1)
+            # Обработка специальных клавиш (стрелки)
+            if ord(key) == 27:  # ESC sequence
+                next1 = sys.stdin.read(1)
+                next2 = sys.stdin.read(1)
+                if next1 == '[':
+                    if next2 == 'A':
+                        return 'W'  # Up arrow
+                    elif next2 == 'B':
+                        return 'S'  # Down arrow
+                    elif next2 == 'C':
+                        return 'D'  # Right arrow
+                    elif next2 == 'D':
+                        return 'A'  # Left arrow
+            return key
         return None
 
     def process_movement(self):

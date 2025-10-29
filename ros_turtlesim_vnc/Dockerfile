@@ -7,20 +7,38 @@ RUN apt-get update && apt-get install -y \
     tigervnc-standalone-server \
     novnc websockify \
     fluxbox \
-    python3-pip \
+    xterm \
     && rm -rf /var/lib/apt/lists/*
 
+# Создание пользователя ros
+RUN useradd -m -s /bin/bash ros && \
+    echo "ros:password" | chpasswd && \
+    usermod -aG sudo ros
+
+# Переключение на пользователя ros
+USER ros
+WORKDIR /home/ros
+
 # Создание рабочей директории
-WORKDIR /ros_workspace
+RUN mkdir -p /home/ros/ros_workspace
+WORKDIR /home/ros/ros_workspace
 
 # Копируем демонстрационные файлы
-COPY src/ ./src/
+COPY --chown=ros:ros src/ ./src/
+
+# Делаем скрипты исполняемыми
+RUN chmod +x ./src/demo/*.py ./src/demo/examples/*.py
 
 # Копируем стартовый скрипт
-COPY --chmod=755 start.sh /start.sh
+COPY --chown=ros:ros --chmod=755 start.sh /home/ros/start.sh
+
+# Создание базовых ROS2 файлов настройки
+RUN echo "source /opt/ros/jazzy/setup.bash" >> /home/ros/.bashrc && \
+    echo "export ROS_DOMAIN_ID=0" >> /home/ros/.bashrc && \
+    echo "export DISPLAY=:1" >> /home/ros/.bashrc
 
 # Открываем порты для VNC и web-интерфейса
 EXPOSE 5901 6080
 
 # Команда по умолчанию
-CMD ["/start.sh"]
+CMD ["/home/ros/start.sh"]
