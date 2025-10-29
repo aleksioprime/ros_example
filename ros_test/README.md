@@ -1,10 +1,15 @@
-# Тестирование программ на ROS
+# Тестирование программ на ROS 2 (Jazzy)
 
-## Подготовка:
+## Подготовка окружения
 
-Перейдите в папку проекта и запустите контейнер:
+Склонируйте репозиторий проекта (если ещё не сделали):
 ```sh
+git clone https://github.com/aleksioprime/ros_example.git
 cd ros_test
+```
+
+Соберите и запустите контейнер:
+```sh
 docker compose -p ros_test up -d --build
 ```
 
@@ -13,9 +18,15 @@ docker compose -p ros_test up -d --build
 docker exec -it ros_test bash
 ```
 
-Проверьте топики:
+Проверьте, что окружение ROS2 активировано и топики доступны:
 ```sh
 ros2 topic list
+```
+
+Если всё работает, вы должны увидеть базовые топики:
+```bash
+/parameter_events
+/rosout
 ```
 
 Выход из контейнера:
@@ -23,22 +34,33 @@ ros2 topic list
 exit
 ```
 
-## Запуск программ:
+## Запуск программ
 
-Запустите программму для публикации значения с сенсоров в топики в отдельном терминале:
+### Публикация данных сенсоров
+
+Откройте новый терминал и запустите программу, которая публикует случайные значения сенсоров в топики:
 ```sh
 docker exec -it ros_test bash
+
 python3 src/demo/sensor_publisher.py
 ```
 
-Проверьте публикацию данных в топики:
+### Подписка на данные сенсоров
+
+Откройте другой терминал и проверьте, что данные действительно публикуются:
 ```sh
+docker exec -it ros_test bash
+
 ros2 topic echo --once /sensor/light_sensor
 ros2 topic echo --once /sensor/smoke_sensor
 ```
 
-Запустите программму для получния значения с сенсоров из топиков в отдельном терминале:
+Запустите программму, которая считывает данные из топиков:
 ```sh
-docker exec -it ros_test bash
 docker exec -it ros_test python3 src/tasks/topic_nadzor.py
+```
+
+После тестирования можно остановить контейнер:
+```sh
+docker compose -p ros_test down
 ```
