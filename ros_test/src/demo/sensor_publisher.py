@@ -34,7 +34,8 @@ class SensorPublisher(Node):
         ]
 
         # Случайно выбираем от 2 до 5 сенсоров из списка
-        selected = random.sample(available_sensors, random.randint(2, 5))
+        # selected = random.sample(available_sensors, random.randint(2, 5))
+        selected = available_sensors
 
         self.get_logger().info(f"Активные сенсоры: {', '.join(selected)}")
 

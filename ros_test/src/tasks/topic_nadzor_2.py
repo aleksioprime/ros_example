@@ -6,6 +6,7 @@ ROS2-узел, который:
 4. Проверяет диапазон (-1000 <= value <= 1000) и выводит результат
 """
 
+import time
 import re
 import rclpy
 from rclpy.node import Node
@@ -23,16 +24,8 @@ class SensorMonitor(Node):
         """
         super().__init__('sensor_monitor')
 
-        # Получаем все топики и фильтруем по шаблону /sensor/<name>
-        topics = self.get_topic_names_and_types()
-        pattern = re.compile(r'^/sensor/([a-zA-Z0-9_]+)$')
-
-        self.sensors = [
-            match.group(1)
-            for name, types in topics
-            if pattern.match(name) and 'std_msgs/msg/Float64' in types
-            for match in [pattern.match(name)]
-        ]
+        # Поиск сенсорных топиков с ожиданием
+        self.sensors = self._find_sensor_topics(timeout=5.0)
 
         # Если сенсоры не найдены — завершаем работу
         if not self.sensors:
@@ -73,6 +66,29 @@ class SensorMonitor(Node):
         # Завершаем, если получили данные от всех сенсоров
         if len(self.results) == len(self.sensors):
             self.done = True
+
+    def _find_sensor_topics(self, timeout: float = 5.0) -> list[str]:
+        """
+        Ищет все топики формата /sensor/<sensor_name> с типом std_msgs/msg/Float64.
+        Если топики отсутствуют, ожидает их появления в течение заданного времени.
+        """
+        pattern = re.compile(r'^/sensor/([a-zA-Z0-9_]+)$')
+        start = time.time()
+        found = []
+        time.sleep(0.5)  # небольшая задержка перед первым запросом
+
+        while not found and time.time() - start < timeout:
+            topics = self.get_topic_names_and_types()
+            found = [
+                match.group(1)
+                for name, types in topics
+                if pattern.match(name) and 'std_msgs/msg/Float64' in types
+                for match in [pattern.match(name)]
+            ]
+            if not found:
+                time.sleep(0.1)
+
+        return found
 
 
 def main():
